@@ -27,9 +27,9 @@ public class MyURL {
 		pattern = Pattern.compile(full_regex);
 		matcher = pattern.matcher(global_url);
 		try {
-//			if (!matcher.find()) {
-//				throw new IllegalArgumentException();
-//			}
+			if (!matcher.find()) {
+				throw new IllegalArgumentException();
+			}
 		} catch (Exception e) {
 			throw new IllegalArgumentException("This is not a valid URL.\n Please check your input and try again :)");
 		}
@@ -64,11 +64,14 @@ public class MyURL {
 	public static String getPort() {
 		pattern = Pattern.compile(port_regex);
 		matcher = pattern.matcher(global_url);
-		try {
-			return getMatch();
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Please input a valid port");
+		String port = getMatch();
+		if (!port.isEmpty()) {
+			String[] portList = port.split(":");
+			port = portList[1];
+		} else {
+			port = "-1";
 		}
+		return port;
 	}
 	
 	public static String getPath() {

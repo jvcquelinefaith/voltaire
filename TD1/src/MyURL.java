@@ -22,7 +22,7 @@ public class MyURL {
 	
 	static int previous_index = 0;
 	
-	public static void parse(String url) throws IllegalArgumentException {
+	public MyURL(String url) throws IllegalArgumentException {
 		global_url = url;	
 		pattern = Pattern.compile(full_regex);
 		matcher = pattern.matcher(global_url);
@@ -34,14 +34,9 @@ public class MyURL {
 			throw new IllegalArgumentException("This is not a valid URL.\n Please check your input and try again :)");
 		}
 		System.out.println("url : " + global_url);
-		System.out.println("protocol : " + getProtocol());
-		System.out.println("host : " + getHost());
-		System.out.println("port : " + getPort());
-		System.out.println("path : " + getPath());
-	
 	}
 	
-	public static String getProtocol() {
+	public String getProtocol() {
 		pattern = Pattern.compile(proto_regex);
 		matcher = pattern.matcher(global_url);
 		try {
@@ -51,7 +46,7 @@ public class MyURL {
 		}
 	}
 	
-	public static String getHost() {
+	public String getHost() {
 		pattern = Pattern.compile(host_regex);
 		matcher = pattern.matcher(global_url);
 		try {
@@ -61,7 +56,7 @@ public class MyURL {
 		}
 	}
 	
-	public static String getPort() {
+	public String getPort() {
 		pattern = Pattern.compile(port_regex);
 		matcher = pattern.matcher(global_url);
 		String port = getMatch();
@@ -74,7 +69,7 @@ public class MyURL {
 		return port;
 	}
 	
-	public static String getPath() {
+	public String getPath() {
 		pattern = Pattern.compile(path_regex);
 		matcher = pattern.matcher(global_url);
 		try {
@@ -95,7 +90,12 @@ public class MyURL {
 	}
 
 	public static void main(String[] args) {
-		parse(args[0]);
+		MyURL parser = new MyURL(args[0]);
+		System.out.println("protocol : " + parser.getProtocol());
+		System.out.println("host : " + parser.getHost());
+		System.out.println("port : " + parser.getPort());
+		System.out.println("path : " + parser.getPath());
+		
 	}
 
 }

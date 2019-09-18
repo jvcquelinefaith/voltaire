@@ -10,18 +10,16 @@ public class MyURL {
 	private static String global_url = "";
 	static String dot = "\\.";
 	static String alpha_nums = "\\p{Alnum}+";
-	static String proto_regex = "\\p{Alpha}+";
-	static String host_regex = "(" + alpha_nums + dot + ")*" + alpha_nums;
-	static String port_regex = "(:\\p{Digit}+)?";
+	static String proto_regex = "(?<protocol>\\p{Alpha}+)";
+	static String host_regex = "(?<host>(" + alpha_nums + dot + ")*" + alpha_nums + ")";
+	static String port_regex = "(:(?<port>\\p{Digit}+))?";
 	static String path_char = "[\\p{Graph}^[/?#]]";
-	static String path_regex = "/(" + path_char + "+/)*" + path_char + "*";
+	static String path_regex = "(?<path>(/(" + path_char + "+/)*" + path_char + "*))";
 	static String full_regex = "(" + proto_regex + "://" + host_regex + port_regex + path_regex + ")";
 	
 	static Pattern pattern;
 	static Matcher matcher;
-	
-	static int previous_index = 0;
-	
+		
 	public MyURL(String url) throws IllegalArgumentException {
 		global_url = url;	
 		pattern = Pattern.compile(full_regex);
@@ -33,36 +31,28 @@ public class MyURL {
 		} catch (Exception e) {
 			throw new IllegalArgumentException("This is not a valid URL.\n Please check your input and try again :)");
 		}
-		System.out.println("url : " + global_url);
 	}
 	
 	public String getProtocol() {
-		pattern = Pattern.compile(proto_regex);
-		matcher = pattern.matcher(global_url);
 		try {
-			return getMatch();
+			return matcher.group("protocol");
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Please input a valid protocol");
 		}
 	}
 	
 	public String getHost() {
-		pattern = Pattern.compile(host_regex);
-		matcher = pattern.matcher(global_url);
 		try {
-			return getMatch();
+			return matcher.group("host");
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Please input a valid host");
 		}
 	}
 	
 	public String getPort() {
-		pattern = Pattern.compile(port_regex);
-		matcher = pattern.matcher(global_url);
-		String port = getMatch();
-		if (!port.isEmpty()) {
-			String[] portList = port.split(":");
-			port = portList[1];
+		String port = matcher.group("port");
+		if (port != null && !port.isEmpty()) {
+			return port;
 		} else {
 			port = "-1";
 		}
@@ -70,27 +60,17 @@ public class MyURL {
 	}
 	
 	public String getPath() {
-		pattern = Pattern.compile(path_regex);
-		matcher = pattern.matcher(global_url);
 		try {
-			return getMatch();
+			return matcher.group("path");
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Please input a valid path");
 		}
 	}
-	
-	public static String getMatch() {
-		if (matcher.find(previous_index)) {
-			previous_index = matcher.end();
-			return matcher.group();
-		} else {
-			previous_index = matcher.end();
-			throw new IllegalArgumentException();
-		}
-	}
+
 
 	public static void main(String[] args) {
 		MyURL parser = new MyURL(args[0]);
+		
 		System.out.println("protocol : " + parser.getProtocol());
 		System.out.println("host : " + parser.getHost());
 		System.out.println("port : " + parser.getPort());

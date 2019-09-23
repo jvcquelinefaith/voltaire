@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 public class Xurl {
 	
@@ -12,8 +14,10 @@ public class Xurl {
 	BufferedReader reader;
 	PrintStream writer;
 	PrintStream resultFile;
+	static String xUrl = "";
 	String xPath = "";
 	String xHost = "";
+	String xProxy;
 	String xFilename = "";
 	int xContentLength = 0;
 	
@@ -23,6 +27,20 @@ public class Xurl {
 		if (port < 0) {
 			port = 80;
 		}
+		xPath = path;
+		xHost = host;
+		xFilename = getFilename(path);
+		openConnection(host, port);
+	}
+	
+	public Xurl(String host, int port, String path, String proxy_name) {
+		SocketAddress sa = new InetSocketAddress(proxy_name, port);
+		xSocket = new Socket(new Proxy(Proxy.Type.HTTP, sa));
+		//Setting default port to 80 if not specified
+		if (port < 0) {
+			port = 80;
+		}
+		xProxy = proxy_name;
 		xPath = path;
 		xHost = host;
 		xFilename = getFilename(path);
@@ -43,6 +61,7 @@ public class Xurl {
 	public void openConnection(String host, int port) {
 		try {
 			xSocket.connect(new InetSocketAddress(host, port), 10000);
+	
 			reader = new BufferedReader(new InputStreamReader(xSocket.getInputStream()));
 			writer = new PrintStream(xSocket.getOutputStream(), true);
 		} catch (Exception e) {
@@ -92,7 +111,9 @@ public class Xurl {
 				resultFile.println(line);
 			}
 		}
+		reader.close();
 		resultFile.close();
+		writer.close();
 	}
 	
 	public void processCommand() {
@@ -101,6 +122,7 @@ public class Xurl {
 			
 			String command = "";
 			//Issuing command to the socket
+
 			writer.print("GET " + xPath + " HTTP/1.1\r\n");
 			writer.print("Host: " + xHost + " \r\n");
 			writer.print("\r\n");
@@ -137,11 +159,25 @@ public class Xurl {
 
 	public static void main(String[] args) {
 		if (args.length > 0) {
+			xUrl = args[0];
 			MyURL parser = new MyURL(args[0]);
 			String host = parser.getHost();
 			int port = parser.getPort();
 			String path = parser.getPath();
-			Xurl x = new Xurl(host, port, path);
+			Xurl x;
+			if (args.length > 2) {
+				String proxy = "";
+				if (args[1]!=null) {
+					proxy = args[1].trim();
+				} if (args[2] != null) {
+					port = Integer.parseInt(args[2].trim());
+				}
+				System.out.println(port);
+				System.out.println(proxy);
+				x = new Xurl(host, port, path, proxy);
+			} else {
+				x = new Xurl(host, port, path);
+			}
 			x.processCommand();
 			x.closeConnection();
 		} else {

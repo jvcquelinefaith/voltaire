@@ -6,8 +6,6 @@ import java.util.regex.Pattern;
  * @author jackie.charles-etuk
  */
 public class MyURL {
-	
-	private static String global_url = "";
 	static String dot = "\\.";
 	static String alpha_nums = "\\p{Alnum}+";
 	static String proto_regex = "(?<protocol>\\p{Alpha}+)";
@@ -17,13 +15,16 @@ public class MyURL {
 	static String path_regex = "(?<path>(/(" + path_char + "+/)*" + path_char + "*))";
 	static String full_regex = "(" + proto_regex + "://" + host_regex + port_regex + path_regex + ")";
 	
-	static Pattern pattern;
-	static Matcher matcher;
+	Pattern pattern;
+	Matcher matcher;
+	
+	static String global_url = "";
 		
 	public MyURL(String url) throws IllegalArgumentException {
-		global_url = url;	
 		pattern = Pattern.compile(full_regex);
-		matcher = pattern.matcher(global_url);
+		matcher = pattern.matcher(url);
+		global_url = url;
+		
 		try {
 			if (!matcher.find()) {
 				throw new IllegalArgumentException();
@@ -34,43 +35,30 @@ public class MyURL {
 	}
 	
 	public String getProtocol() {
-		try {
-			return matcher.group("protocol");
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Please input a valid protocol");
-		}
+		return matcher.group("protocol");
 	}
 	
 	public String getHost() {
-		try {
-			return matcher.group("host");
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Please input a valid host");
-		}
+		return matcher.group("host");
 	}
 	
-	public String getPort() {
+	public int getPort() {
 		String port = matcher.group("port");
-		if (port != null && !port.isEmpty()) {
-			return port;
-		} else {
+		if (port == null || port.isEmpty()) {
 			port = "-1";
 		}
-		return port;
+		int integer_port = Integer.parseInt(port);
+		return integer_port;
 	}
 	
 	public String getPath() {
-		try {
-			return matcher.group("path");
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Please input a valid path");
-		}
+		return matcher.group("path");
 	}
 
 
 	public static void main(String[] args) {
 		MyURL parser = new MyURL(args[0]);
-		
+		System.out.println("url : " + global_url);
 		System.out.println("protocol : " + parser.getProtocol());
 		System.out.println("host : " + parser.getHost());
 		System.out.println("port : " + parser.getPort());

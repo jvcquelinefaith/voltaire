@@ -7,12 +7,12 @@ public class URLprocessing {
 	static String alpha_nums = "\\p{Alnum}+";
 	static String proto_regex = "(?<protocol>\\p{Alpha}+)";
 	static String host_regex = "(?<host>(" + alpha_nums + dot + ")*" + alpha_nums + ")";
-	static String port_regex = "(:(?<port>\\p{Digit}+))?";
+	static String port_regex = "(:(\\p{Digit}+))?";
 	static String path_char = "[\\p{Graph}^[/?#]]";
 	static String path_regex = "(?<path>(/(" + path_char + "+/)*" + path_char + "*))";
-	static String full_regex = "([\"'](?<url>(" + proto_regex + "://" + host_regex + port_regex + path_regex + "))[\"'])";
+	static String full_regex = "(?<url>[\"']((" + proto_regex + "://" + host_regex + port_regex + path_regex + "))[\"'])";
 	
-	static String href_regex = "(a(^a/./)+href)";
+	static String href_regex = "(?i)(<a(\\s)+(.*(\\s)+)*(href)(\\s)*=(\\s)*"+full_regex+"(.*(\\s)*)*(\\/)*>(.*)(<(\\/)a>)*)";
 	
 	static Pattern pattern;
 	static Matcher matcher;
@@ -43,13 +43,14 @@ public class URLprocessing {
 			current = data.charAt(count);
 			line += current;
 			if(current == '>') {
-				pattern = Pattern.compile(href_regex, Pattern.CASE_INSENSITIVE);
+				pattern = Pattern.compile(href_regex);
 				matcher = pattern.matcher(line);
 				if (matcher.find()) {
 					pattern = Pattern.compile(full_regex);
 					matcher = pattern.matcher(line);
 					if(matcher.find()) {
 						valid_url = matcher.group("url");
+						valid_url = valid_url.substring(1, valid_url.length()-1);
 						handler.takeUrl(valid_url);
 					}
 				}

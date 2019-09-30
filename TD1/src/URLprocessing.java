@@ -5,14 +5,14 @@ public class URLprocessing {
 	
 	static String dot = "\\.";
 	static String alpha_nums = "\\p{Alnum}+";
-	static String proto_regex = "(?<protocol>\\p{Alpha}+)";
-	static String host_regex = "(?<host>(" + alpha_nums + dot + ")*" + alpha_nums + ")";
+	static String proto_regex = "(http)";
+	static String host_regex = "((" + alpha_nums + dot + ")*" + alpha_nums + ")";
 	static String port_regex = "(:(\\p{Digit}+))?";
 	static String path_char = "[\\p{Graph}^[/?#]]";
-	static String path_regex = "(?<path>(/(" + path_char + "+/)*" + path_char + "*))";
-	static String full_regex = "(?<url>[\"']((" + proto_regex + "://" + host_regex + port_regex + path_regex + "))[\"'])";
-	
-	static String href_regex = "(?i)(<a(\\s)+(.*(\\s)+)*(href)(\\s)*=(\\s)*"+full_regex+"(.*(\\s)*)*(\\/)*>(.*)(<(\\/)a>)*)";
+	static String path_regex = "((/(" + path_char + "+/)*" + path_char + "*))";
+	static String full_regex = "((" + proto_regex + "://" + host_regex + port_regex + path_regex + "))";
+	static String url_regex = "(?<url>(\""+full_regex+"\"|'"+full_regex+"'))";
+	static String href_regex = "(?i)(<a(\\s)+(.*(\\s)+)*(href)(\\s)*=(\\s)*"+url_regex+"(.*(\\s)*)*(\\/)*>(.*)(<(\\/)a>)*)";
 	
 	static Pattern pattern;
 	static Matcher matcher;
@@ -46,7 +46,7 @@ public class URLprocessing {
 				pattern = Pattern.compile(href_regex);
 				matcher = pattern.matcher(line);
 				if (matcher.find()) {
-					pattern = Pattern.compile(full_regex);
+					pattern = Pattern.compile(url_regex);
 					matcher = pattern.matcher(line);
 					if(matcher.find()) {
 						valid_url = matcher.group("url");

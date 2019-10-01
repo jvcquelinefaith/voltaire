@@ -36,6 +36,7 @@ public class Wget {
 			String url = queue.dequeue();
 			if(!seen.contains(url)) {
 				seen.add(url);
+				System.out.println(url);
 				Xurl.query(url, proxyHost, proxyPort); // don't change this call
 			}
 		}
@@ -64,18 +65,16 @@ public class Wget {
 		while (!queue.isEmpty() || (initial_thread_count < final_thread_count)) {
 			if (!queue.isEmpty()) {
 				String url = queue.dequeue();
-				Thread thread = new Thread(new QueryUrl(requestedURL, proxyHost, proxyPort));
-				System.out.println("inside " + thread.activeCount());
+				Thread thread = new Thread(new QueryUrl(url, proxyHost, proxyPort));
 				thread.start();
-				System.out.println(thread.currentThread() + " was here checking " + url);
 			}
 			try {
-				Thread.sleep(1);
-			} catch(Exception e) {
-				e.getMessage();
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			final_thread_count = Thread.activeCount();
-			System.out.println("final " + final_thread_count);
 		}
 	}
 
@@ -83,6 +82,38 @@ public class Wget {
 
 	public static void doThreadedPool(int poolSize, String requestedURL, String proxyHost, int proxyPort) {
 		// to be completed at exercise 6
+		final URLQueue queue = new BlockingListQueue(poolSize);
+		final HashSet<String> seen = new HashSet<String>();
+
+		URLprocessing.handler = new URLprocessing.URLhandler() {
+			// this method is called for each matched url
+			public void takeUrl(String url) {
+				// to be completed
+				synchronized(seen) {
+					if (!seen.contains(url) || !queue.isFull()) {
+						seen.add(url);
+						queue.enqueue(url);
+					}
+				}
+			}
+		};
+		// to start, we push the initial url into the queue
+		URLprocessing.handler.takeUrl(requestedURL);
+		int final_thread_count = 0;
+		while (!queue.isEmpty() || (initial_thread_count < final_thread_count)) {
+			if (!queue.isEmpty()) {
+				String url = queue.dequeue();
+				Thread thread = new Thread(new QueryUrl(url, proxyHost, proxyPort));
+				thread.start();
+			}
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			final_thread_count = Thread.activeCount();
+		}
 	}
 
 	public static void main(String[] args) {
@@ -97,8 +128,8 @@ public class Wget {
 		if (args.length > 2)
 			proxyPort = Integer.parseInt(args[2]);
 		//doIterative(args[0], proxyHost, proxyPort);
-		doMultiThreaded(args[0], proxyHost, proxyPort);
-		// doThreadedPool(3, args[0], proxyHost, proxyPort);
+		//doMultiThreaded(args[0], proxyHost, proxyPort);
+		doThreadedPool(3, args[0], proxyHost, proxyPort);
 	}
 
 }

@@ -22,7 +22,7 @@ public class Wget {
 		final URLQueue queue = new ListQueue();
 		final HashSet<String> seen = new HashSet<String>();
 		URLprocessing.handler = new URLprocessing.URLhandler() {
-			// this method is called for each ma  tched url
+			// this method is called for each matched url
 			public void takeUrl(String url) {
 				// to be completed
 				if (!seen.contains(url)) {
@@ -78,11 +78,9 @@ public class Wget {
 		}
 	}
 
-
-
 	public static void doThreadedPool(int poolSize, String requestedURL, String proxyHost, int proxyPort) {
 		// to be completed at exercise 6
-		final URLQueue queue = new BlockingListQueue(poolSize);
+		final URLQueue queue = new BlockingListQueue();
 		final HashSet<String> seen = new HashSet<String>();
 
 		URLprocessing.handler = new URLprocessing.URLhandler() {
@@ -100,19 +98,22 @@ public class Wget {
 		// to start, we push the initial url into the queue
 		URLprocessing.handler.takeUrl(requestedURL);
 		int final_thread_count = 0;
-		while (!queue.isEmpty() || (initial_thread_count < final_thread_count)) {
-			if (!queue.isEmpty()) {
-				String url = queue.dequeue();
-				Thread thread = new Thread(new QueryUrl(url, proxyHost, proxyPort));
-				thread.start();
+		int num_threads = poolSize;
+		while(!Thread.interrupted() ) {
+			while (!queue.isEmpty() || (initial_thread_count < final_thread_count)) {
+				if (!queue.isEmpty()) {
+					String url = queue.dequeue();
+					Thread thread = new Thread(new QueryUrl(url, proxyHost, proxyPort));
+					thread.start();
+				}
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				final_thread_count = Thread.activeCount();
 			}
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			final_thread_count = Thread.activeCount();
 		}
 	}
 

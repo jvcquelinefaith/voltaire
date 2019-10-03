@@ -6,6 +6,5 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="/TD1"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

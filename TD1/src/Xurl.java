@@ -66,7 +66,8 @@ public class Xurl {
    *          the name of a local file where the result will be stored
    */
   private static void download(BufferedReader answerStream, String fileName) {
-    int length = parseHeader(answerStream);
+	System.out.println("entering download");
+	int length = parseHeader(answerStream);
     char[] buffer = new char[length > 0 ? length : 0]; // initial allocation
     // System.out.println("filename : \"" + fileName + "\"");
     //
@@ -95,6 +96,7 @@ public class Xurl {
           if (length == 0)
             break;
         }
+        System.out.println("length: " + length);
         if (buffer.length < length)
           buffer = new char[length]; // size extended as needed
         while (count < length) {
@@ -104,8 +106,9 @@ public class Xurl {
             break;
           }
           count += n;
-          // System.out.println(n + " " + count);
+          System.out.println(n + " " + count);
         }
+        System.out.println("writing file");
         file.write(buffer, 0, length);
         // uncomment the next line for exercise 3
         URLprocessing.parseDocument(CharBuffer.wrap(buffer, 0, length));
@@ -144,6 +147,7 @@ public class Xurl {
       String proxyHost, int proxyPort, PrintStream queryStream,
       BufferedReader answerStream, String fileName) {
     // now we are speaking HTTP
+	System.out.println("entering doRequest");
     queryStream.print("GET " + requestedURL + " HTTP/1.1\r\n");
     queryStream.print("Host: " + requestedHost + "\r\n");
     queryStream.print("\r\n"); // an 'empty' line = "\r\n" only
@@ -155,6 +159,8 @@ public class Xurl {
     // analyse first line of header
     try {
       line = answerStream.readLine();
+  	  System.out.println("line is: " + line);
+
       if (SHOW_HEADER)
         System.out.println(line);
       if (line == null) {
@@ -194,6 +200,7 @@ public class Xurl {
       e1.printStackTrace();
       System.exit(-8);
     }
+    System.out.println("Wanting to download");
     download(answerStream, fileName);
   }
 
@@ -216,6 +223,7 @@ public class Xurl {
     // we create an unconnected socket
     // no explicit binding, so the local address (local port number) is picked
     // by system
+	System.out.println("entering connect and query");
     Socket socket = new Socket();
     PrintStream queryStream = null;
     BufferedReader answerStream = null;
@@ -265,6 +273,7 @@ public class Xurl {
    */
   public static void query(String requestedURL, String indicatedName,
       String proxyHost, int proxyPort) {
+	System.out.println("entering query");
     // weird initialization to prevent a warning about potential null reference
     MyURL url = new MyURL("a://b/");
     try {

@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,33 +22,79 @@ public class Xserver {
 	static Pattern pattern;
 	static Matcher matcher;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) { 
+		if (args.length < 1) {
+	      System.err.println("Usage: java Xserver proxyPort [nThreads] [backlog]");
+	      System.exit(-1);
+	    }
+		int numThreads = 0;
 		int backlog = 3;
+		if (args.length > 1) {		
+			numThreads = Integer.parseInt(args[1]);
+		}
+		if (args.length > 2) {
+			backlog = Integer.parseInt(args[2]);
+		}
+		
 		int portNumber = Integer.parseInt(args[0]);
 		boolean runnable = true;
+		if (numThreads > 0) {
+			threadedRun(numThreads, portNumber, backlog);
+		} else {
+			try {
+				ServerSocket server = new ServerSocket(portNumber, backlog);
+				while (runnable) {
+					Socket accepted = server.accept();
+					System.out.println(
+							"*************************\n" + "*Connected to SS Jackie!*\n" + "*************************");
+					handleConnection(accepted);
+				}
+			} catch (Exception e) {
+				//System.out.println("Server Exception: " + e.getMessage() + " caught!");
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void threadedRun(int numThreads, int portNumber, int backlog) {
+		final ArrayList<Thread> pool = new ArrayList<Thread>();
 		try {
 			ServerSocket server = new ServerSocket(portNumber, backlog);
-			while (runnable) {
-				Socket accepted = server.accept();
-				System.out.println(
-						"*************************\n" + "*Connected to SS Jackie!*\n" + "*************************");
-				handleConnection(accepted);
+			while (pool.size() < numThreads) {
+				System.out.println("creating threads");
+				Thread thread = new Thread(new Runnable() {
+					public void run() {
+						while (!Thread.currentThread().isInterrupted()) {
+							Socket accepted = null;
+							try {
+								accepted = server.accept();
+								System.out.println(
+										"*************************\n" + 
+										"*Connected to SS Jackie!*\n" +
+										"*My Name is: " + Thread.currentThread().getName() +
+										"*\n*************************");
+								handleConnection(accepted);
+							} catch (IOException e) {
+								System.out.println("Handler Exception: " + e.getMessage() + " caught!");
+							}
+						}
+					}
+				});
+				thread.start();
+				pool.add(thread);
 			}
-		} catch (Exception e) {
-			//System.out.println("Server Exception: " + e.getMessage() + " caught!");
-			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Handler Exception: " + e.getMessage() + " caught!");
 		}
 	}
 
 	public static void handleConnection(Socket socket) throws IOException {
 		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
 
 		String query;
 		Boolean getQuery = false;
 		Boolean getHost = false;
-		Boolean getPath = false;
 		
 		String filePath = "";
 		Boolean validFile = false;
@@ -114,7 +161,9 @@ public class Xserver {
 			
 		}
 		
-		fileReader.close();
+		if (fileReader != null) {
+			fileReader.close();
+		}
 		out.close();
 	}
 

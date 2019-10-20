@@ -2,9 +2,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -17,10 +15,13 @@ public class GroundLayer {
 	 */
 	private static final Charset CONVERTER = StandardCharsets.UTF_8;
 	private static DatagramSocket socket = null;
-	private static byte[] sendBuffer = new byte[256];
-	private static byte[] recieveBuffer = new byte[256];
-	private static boolean runnable = true;
+	private static byte[] sendbuffer = null;
+	private static byte[] recieveBuffer = null;
 	private static Layer destLayer = null;
+	private static String currLayer = null;
+	private static InetAddress destinationAddress;
+	private static Thread thread;
+	private static boolean runnable = false;
 
 	/**
 	 * This value is used as the probability that {@code send} really sends a
@@ -31,52 +32,69 @@ public class GroundLayer {
 	public static boolean start(int localPort) {
 		try {
 			socket = new DatagramSocket(localPort);
+			runnable = true;
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		while (!Thread.currentThread().isInterrupted() && runnable) {
-			Thread thread = new Thread(new Runnable() {
-				public void run() {
+		thread = new Thread(new Runnable() {
+			public void run() {
+				while (!Thread.currentThread().isInterrupted() && runnable) {
+					recieveBuffer = new byte[1000];
 					DatagramPacket packet = new DatagramPacket(recieveBuffer, recieveBuffer.length);
 					try {
 						socket.receive(packet);
+						if (destLayer != null) {
+							// inspired by https://www.baeldung.com/udp-in-java
+							String received = new String(packet.getData(), CONVERTER);
+							currLayer = this.getClass().getName();
+							destLayer.receive(received, currLayer.subSequence(0, currLayer.length()-2).toString());
+						}
 					} catch (IOException e) {
 						runnable = false;
 						System.err.println(e.getMessage());
+						Thread.currentThread().interrupt();
 					}
-
 				}
-			});
-			thread.start();
-		}
-		return socket != null && runnable;
-	}
-
-	public static void deliverTo(Layer layer) {
-		if (layer != null) {
-			destLayer = layer;
-		}
+			}
+		});
+		thread.start();
+		return runnable;
 	}
 
 	public static void send(String payload, String destinationHost, int destinationPort) {
-		//payload.
+		int size = payload.getBytes(CONVERTER).length;
+		sendbuffer = new byte[size];
+		sendbuffer = payload.getBytes(CONVERTER);
 		double l = Math.random();
-		if (l != RELIABILITY) {
-			InetAddress destinationAddress;
+		if (l != 1-RELIABILITY) {
 			try {
 				destinationAddress = InetAddress.getByName(destinationHost);
-				DatagramPacket sendPacket = new DatagramPacket(sendBuffer, sendBuffer.length, destinationAddress, destinationPort);
-				socket.send(sendPacket);
+				DatagramPacket packet = new DatagramPacket(sendbuffer, sendbuffer.length, destinationAddress, destinationPort);
+				socket.send(packet);
 			} catch (IOException e) {
 				System.err.println(e.getMessage());
 			}
 		}
 	}
 
+	public static void deliverTo(Layer above) {
+		if (above != null) {
+			destLayer = above;
+		} else {
+			destLayer = null;
+		}
+	}
+
 	public static void close() {
+		thread.interrupt();
 		Thread.currentThread().interrupt();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			System.err.println(e.getMessage());
+		}
 		socket.close();
-		System.err.println("GroundLayer closed");
+		System.out.println("GroundLayer closed");	
 	}
 
 }

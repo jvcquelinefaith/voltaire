@@ -36,25 +36,23 @@ public class ConnectedLayer implements Layer {
 				} else {
 					newPayload = connectedId + ";" + packetNumber + ";" + payload;
 				}
+				received = false;
 				GroundLayer.send(newPayload, connectedHost, connectedPort);
 				System.out.println("sending...");
+				synchronized(this) {
+					while (!received) {
+						try {
+							System.out.println("waiting");
+							this.wait();
+						} catch (InterruptedException e) {
+							System.err.println(e.getMessage());
+						}
+					}
+					this.cancel();
+				}
 			}
 		};
 		TIMER.schedule(task, 0, 1000);
-		synchronized(this) {
-			while (!received) {
-				try {
-					System.out.println("waiting");
-					wait();
-					task.wait();
-				} catch (InterruptedException e) {
-					System.err.println(e.getMessage());
-				}
-			}
-		}
-		System.out.println("about to cancel");
-		task.cancel();
-		TIMER.cancel();
 	}
 
 	@Override
@@ -71,9 +69,8 @@ public class ConnectedLayer implements Layer {
 			} else {
 				synchronized(this) {
 					received = true;
-					notifyAll();
+					notify();
 					System.out.println("notifying...");
-					return;
 				}
 			}
 		}

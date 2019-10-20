@@ -1,3 +1,5 @@
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ConnectedLayer implements Layer {
 	private static Layer destLayer = null;
@@ -6,6 +8,8 @@ public class ConnectedLayer implements Layer {
 	private int connectedId;
 	private int packetNumber = 0;
 	private final String ack = "--ACK--";
+	private static final Timer TIMER = new Timer("TickTimer", true);
+	private boolean received = false;
 
 	public ConnectedLayer(String host, int port, int id) {
 		connectedHost = host;
@@ -13,8 +17,8 @@ public class ConnectedLayer implements Layer {
 		connectedId = id;
 		String payload = connectedId + ";" + packetNumber + ";" + "--HELLO--";
 		GroundLayer.deliverTo(this);
-		GroundLayer.send(payload, host, port);
 		String currLayer = this.getClass().getName();
+		GroundLayer.send(payload, host, port);
 		if (destLayer != null) {
 			destLayer.receive(payload, currLayer.subSequence(0, currLayer.length()-2).toString());
 		}
@@ -23,14 +27,34 @@ public class ConnectedLayer implements Layer {
 	@Override
 	public void send(String payload) {
 		packetNumber++;
-		String newPayload = "";
 		String load[] = payload.split(";");
-		if (load.length > 1) {
-			newPayload = payload;
-		} else {
-			newPayload = connectedId + ";" + packetNumber + ";" + payload;
+		TimerTask task = new TimerTask() {
+			public void run() {
+				String newPayload = "";
+				if (load.length > 1) {
+					newPayload = payload;
+				} else {
+					newPayload = connectedId + ";" + packetNumber + ";" + payload;
+				}
+				GroundLayer.send(newPayload, connectedHost, connectedPort);
+				System.out.println("sending...");
+			}
+		};
+		TIMER.schedule(task, 0, 1000);
+		synchronized(this) {
+			while (!received) {
+				try {
+					System.out.println("waiting");
+					wait();
+					task.wait();
+				} catch (InterruptedException e) {
+					System.err.println(e.getMessage());
+				}
+			}
 		}
-		GroundLayer.send(newPayload, connectedHost, connectedPort);
+		System.out.println("about to cancel");
+		task.cancel();
+		TIMER.cancel();
 	}
 
 	@Override
@@ -45,7 +69,12 @@ public class ConnectedLayer implements Layer {
 				String newPayload = connectionId + ";" + packetNumber + ";" + ack;
 				send(newPayload);
 			} else {
-				return;
+				synchronized(this) {
+					received = true;
+					notifyAll();
+					System.out.println("notifying...");
+					return;
+				}
 			}
 		}
 	}

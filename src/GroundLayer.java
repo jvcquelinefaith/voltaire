@@ -45,7 +45,7 @@ public class GroundLayer {
 						socket.receive(packet);
 						if (destLayer != null) {
 							// inspired by https://www.baeldung.com/udp-in-java
-							String received = new String(packet.getData(), CONVERTER);
+							String received = new String(packet.getData(), 0, packet.getLength(),CONVERTER);
 							currLayer = this.getClass().getName();
 							destLayer.receive(received, currLayer.subSequence(0, currLayer.length()-2).toString());
 						}

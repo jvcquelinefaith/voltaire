@@ -53,7 +53,7 @@ public class ConnectedLayer implements Layer {
 
 	@Override
 	public void receive(String payload, String source) {
-		//System.out.println('"' + payload + "\" from " + source);
+		System.out.println('"' + payload + "\" from " + source);
 		if (payload != null && !payload.isEmpty()) {
 			String[] load = payload.split(";");
 			String connectionId = load[0].trim();

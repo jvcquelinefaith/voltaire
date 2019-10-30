@@ -66,7 +66,7 @@ public class GroundLayer {
 		sendbuffer = new byte[size];
 		sendbuffer = payload.getBytes(CONVERTER);
 		double l = Math.random();
-		if (l != 1-RELIABILITY) {
+		if (l >= 1-RELIABILITY) {
 			try {
 				destinationAddress = InetAddress.getByName(destinationHost);
 				DatagramPacket packet = new DatagramPacket(sendbuffer, sendbuffer.length, destinationAddress, destinationPort);

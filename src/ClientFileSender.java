@@ -38,7 +38,7 @@ public class ClientFileSender {
 
 	public static void main(String[] args) {
 		if (args.length != 4) {
-			System.err.println("syntax : java FileSender myPort destinationHost destinationPort file");
+			System.err.println("syntax : java ClientFileSender myPort destinationHost destinationPort file");
 			return;
 		}
 		Scanner sc;
@@ -52,6 +52,7 @@ public class ClientFileSender {
 			// GroundLayer.RELIABILITY = 0.5;
 			Layer sender = new ClientFileSenderLayer(args[3], args[1], Integer.parseInt(args[2]));
 			while (sc.hasNextLine()) {
+				System.out.println("reading file");
 				sender.send(sc.nextLine());
 			}
 			System.out.println("closing");

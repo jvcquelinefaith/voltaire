@@ -9,8 +9,10 @@ public class Server_4 {
 			// GroundLayer.RELIABILITY = 0.5;
 			FileReceiver receiver = new FileReceiver(args[1], Integer.parseInt(args[2]),
 					(int) (Math.random() * Integer.MAX_VALUE));
-			receiver.close();
-			GroundLayer.close();
+			if (receiver.getCloseable()) {
+				receiver.close();
+				GroundLayer.close();
+			}
 		}
 	}
 }

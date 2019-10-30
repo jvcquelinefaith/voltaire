@@ -7,7 +7,7 @@ public class ConnectedLayer implements Layer {
 	private int connectedPort;
 	private int connectedId;
 	private int packetNumber = 0;
-	private int nextPacket = packetNumber+1;
+	private int nextPacket = packetNumber + 1;
 	private String remoteConnectionId;
 	private final String ack = "--ACK--";
 	private final String hello = "--HELLO--";
@@ -40,7 +40,7 @@ public class ConnectedLayer implements Layer {
 		TIMER.schedule(task, 0, 300);
 		synchronized (this) {
 			try {
-				//System.out.println("waiting");	
+				//System.out.println("waiting...");
 				this.wait();
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
@@ -53,18 +53,19 @@ public class ConnectedLayer implements Layer {
 
 	@Override
 	public void receive(String payload, String source) {
-		System.out.println('"' + payload + "\" from " + source);
+		System.out.println("" + payload + "\" from " + source);
 		if (payload != null && !payload.isEmpty()) {
 			String[] load = payload.split(";");
 			String connectionId = load[0].trim();
 			String packetNum = load[1].trim();
-			String message = load[2].trim();
+			String message = " ";
+			if (load.length > 2) {
+				message = load[2].trim();
+			}
 			if (message.equals(ack)) {
-				//System.out.println("ack: their connectionId: " + connectedId + " their connection: " + connectionId + " my packet: " + packetNumber + " thier packet: " + packetNum);			
-				if (connectionId.equals(Integer.toString(connectedId)) && packetNum.equals(Integer.toString(packetNumber))) {
-					//System.out.println("connection id and packetNum same");	
+				if (connectionId.equals(Integer.toString(connectedId))
+						&& packetNum.equals(Integer.toString(packetNumber))) {
 					synchronized (this) {
-						//System.out.println("notifying");	
 						this.notifyAll();
 					}
 					return;
@@ -83,6 +84,7 @@ public class ConnectedLayer implements Layer {
 					}
 				} else {
 					synchronized (this) {
+						//System.out.println("notifying...");
 						this.notifyAll();
 					}
 					return;

@@ -15,12 +15,17 @@ public class ConnectedLayer implements Layer {
 	private static final Timer TIMER = new Timer("TickTimer", true);
 
 	public ConnectedLayer(String host, int port, int id) {
-		connectedHost = host;
-		connectedPort = port;
-		connectedId = id;
-		String payload = "--HELLO--";
-		GroundLayer.deliverTo(this);
-		send(payload);
+		Thread thread = new Thread() {
+			public void run() {
+				connectedHost = host;
+				connectedPort = port;
+				connectedId = id;
+				String payload = "--HELLO--";
+				send(payload);
+			}
+		};
+		thread.start();
+		DispatchLayer.register(this, id);
 	}
 
 	@Override
@@ -79,7 +84,7 @@ public class ConnectedLayer implements Layer {
 					String newPayload = connectionId + ";" + packetNum + ";" + ack;
 					GroundLayer.send(newPayload, connectedHost, connectedPort);
 					if (destLayer != null && packetNum.equals(Integer.toString(nextPacket))) {
-						destLayer.receive(message, currLayer.subSequence(0, currLayer.length() - 2).toString());
+						destLayer.receive(message, source);
 						nextPacket++;
 					}
 				} else {

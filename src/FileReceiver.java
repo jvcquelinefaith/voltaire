@@ -24,7 +24,10 @@ public class FileReceiver implements Layer {
 	public void receive(String payload, String source) {
 		if (payload.equals("**CLOSE**")) {
 			isCloseable = true;
-			close();
+			synchronized (this) {
+				this.notifyAll();
+				System.out.println("I am notifying");
+			}
 		} else if (payload.contains("SEND")) {
 			String[] message = payload.split(" ");
 			String filename = message[1];
@@ -42,13 +45,19 @@ public class FileReceiver implements Layer {
 
 	@Override
 	public void close() {
-		if (isCloseable) {
+		synchronized(this) {
 			try {
-				writer.flush();
-				writer.close();
-			} catch (IOException e) {
+				this.wait();
+				System.out.println("I am waiting");
+			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
 			}
+		}
+		try {
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
 	}
 

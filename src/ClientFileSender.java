@@ -52,7 +52,6 @@ public class ClientFileSender {
 			// GroundLayer.RELIABILITY = 0.5;
 			Layer sender = new ClientFileSenderLayer(args[3], args[1], Integer.parseInt(args[2]));
 			while (sc.hasNextLine()) {
-				System.out.println("reading file");
 				sender.send(sc.nextLine());
 			}
 			System.out.println("closing");

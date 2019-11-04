@@ -19,7 +19,7 @@ public class ConnectedLayer implements Layer {
 		connectedPort = port;
 		connectedId = id;
 		String payload = "--HELLO--";
-		DispatchLayer.register(this, id);
+		//DispatchLayer.register(this, id);
 		send(payload);
 	}
 

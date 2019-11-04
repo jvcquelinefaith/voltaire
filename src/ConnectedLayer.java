@@ -15,17 +15,12 @@ public class ConnectedLayer implements Layer {
 	private static final Timer TIMER = new Timer("TickTimer", true);
 
 	public ConnectedLayer(String host, int port, int id) {
-		Thread thread = new Thread() {
-			public void run() {
-				connectedHost = host;
-				connectedPort = port;
-				connectedId = id;
-				String payload = "--HELLO--";
-				send(payload);
-			}
-		};
-		thread.start();
+		connectedHost = host;
+		connectedPort = port;
+		connectedId = id;
+		String payload = "--HELLO--";
 		DispatchLayer.register(this, id);
+		send(payload);
 	}
 
 	@Override
@@ -109,7 +104,6 @@ public class ConnectedLayer implements Layer {
 
 	@Override
 	public void close() {
-		GroundLayer.close();
 	}
 
 }

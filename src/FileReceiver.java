@@ -5,30 +5,36 @@ public class FileReceiver implements Layer {
 	private Layer subLayer;
 	private boolean isCloseable = false;
 	private FileWriter writer = null;
-	private String newFilename = "";	
+	private String newFilename = "";
 
 	public FileReceiver(String clientHost, int clientPort, int id) {
 		this.subLayer = new ConnectedLayer(clientHost, clientPort, id);
 		this.subLayer.deliverTo(this);
 	}
-	
+
 	public boolean getCloseable() {
 		return isCloseable;
 	}
-	
+
 	public Layer getSubLayer() {
 		return subLayer;
 	}
-	
+
 	@Override
 	public void receive(String payload, String source) {
-		if (payload.equals("**CLOSE**")) {
-			isCloseable = true;
+		if (payload.contains("**CLOSE**")) {
 			synchronized (this) {
-				this.notifyAll();
+				isCloseable = true;
 				System.out.println("I am notifying");
+				this.notifyAll();
 			}
-		} else if (payload.contains("SEND")) {
+			try {
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {
+				System.err.println(e.getMessage());
+			}
+		} else if (payload.startsWith("SEND ")) {
 			String[] message = payload.split(" ");
 			String filename = message[1];
 			newFilename = "_received_" + filename;
@@ -40,32 +46,28 @@ public class FileReceiver implements Layer {
 		} else {
 			send(payload);
 		}
-		
+
 	}
 
 	@Override
 	public void close() {
-		synchronized(this) {
-			try {
-				this.wait();
-				System.out.println("I am waiting");
-			} catch (InterruptedException e) {
-				System.err.println(e.getMessage());
+		synchronized (this) {
+			if(!isCloseable) {
+				try {
+					System.out.println("I am waiting");
+					this.wait();
+				} catch (InterruptedException e) {
+					System.err.println(e.getMessage());
+				}
 			}
 		}
-		try {
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
+		this.subLayer.close();
 	}
 
 	@Override
 	public void send(String payload) {
 		if (writer != null) {
 			try {
-				//System.out.println("writing");
 				writer.write(payload + '\n');
 			} catch (IOException e) {
 				System.err.println(e.getMessage());

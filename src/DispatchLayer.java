@@ -7,14 +7,14 @@ public class DispatchLayer implements Layer {
 	private static Layer dispatcher = null;
 
 	public static synchronized void start() {
-		if (dispatcher == null)
+		if (dispatcher == null) {
 			dispatcher = new DispatchLayer();
+		}
 		GroundLayer.deliverTo(dispatcher);
 	}
 
 	@SuppressWarnings("boxing")
 	public static synchronized void register(Layer layer, int sessionId) {
-		System.out.println("registering Layer");
 		if (dispatcher != null) {
 			table.put(sessionId, layer);
 			GroundLayer.deliverTo(dispatcher);
@@ -30,30 +30,39 @@ public class DispatchLayer implements Layer {
 	public void send(String payload) {
 		throw new UnsupportedOperationException("don't use this for sending");
 	}
+	
+	public int getNewId() {
+		int newId = (int) (Math.random() * Integer.MAX_VALUE);
+		while(table.containsKey(newId)) {
+			newId = (int) (Math.random() * Integer.MAX_VALUE);
+		}
+		return newId;
+	}
 
 	@Override
 	public void receive(String payload, String source) {
-		System.out.println("payload: " + payload + "source: " + source);
 		String[] load = payload.split(";");
-		int connectionId = Integer.parseInt(load[0].trim());
-		Layer connectedLayer;
 		
+		int connectionId = Integer.parseInt(load[0].trim());
 		if (table.containsKey(connectionId)) {
-			System.out.println("contained id");
-			connectedLayer = table.get(connectionId);
+			Layer connectedLayer = table.get(connectionId);
+			connectedLayer.receive(payload, source);
 		} else {
-			System.out.println("did not contain id");
 			String[] address = source.split(":");
-			String hostname = address[0].trim();
-			String[] hostlist = hostname.split("/");
-			String host = "http://" + hostlist[0].trim();
+			String host = address[0].trim();
+			String[] hostnames = host.split("/");
+			String hostname = hostnames[1];
 			int port = Integer.parseInt(address[1].trim());
-			FileReceiver receiver = new FileReceiver(host, port, connectionId);
-			Layer subLayer = receiver.getSubLayer();
-			connectedLayer = subLayer;
-		}
-		System.out.println("recieving from DL, sending to CL");
-		connectedLayer.receive(payload, source);
+			Thread thread = new Thread() {
+				public void run() {
+					FileReceiver receiver = new FileReceiver(hostname, port, getNewId());
+					Layer subLayer = receiver.getSubLayer();
+					subLayer.receive(payload, source);
+					register(subLayer, connectionId);
+				}
+			};
+			thread.start();
+		}		
 	}
 
 	@Override

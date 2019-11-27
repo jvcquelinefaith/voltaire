@@ -25,7 +25,6 @@ public class FileReceiver implements Layer {
 		if (payload.contains("**CLOSE**")) {
 			synchronized (this) {
 				isCloseable = true;
-				System.out.println("I am notifying");
 				this.notifyAll();
 			}
 			try {
@@ -54,7 +53,6 @@ public class FileReceiver implements Layer {
 		synchronized (this) {
 			if(!isCloseable) {
 				try {
-					System.out.println("I am waiting");
 					this.wait();
 				} catch (InterruptedException e) {
 					System.err.println(e.getMessage());

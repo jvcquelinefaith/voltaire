@@ -19,7 +19,7 @@ public class ConnectedLayer implements Layer {
 		connectedPort = port;
 		connectedId = id;
 		String payload = "--HELLO--";
-		//DispatchLayer.register(this, id);
+		QueueingDispatchLayer.register(this, id);
 		send(payload);
 	}
 
@@ -40,7 +40,6 @@ public class ConnectedLayer implements Layer {
 		TIMER.schedule(task, 0, 300);
 		synchronized (this) {
 			try {
-				//System.out.println("waiting...");
 				this.wait();
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
@@ -84,7 +83,6 @@ public class ConnectedLayer implements Layer {
 					}
 				} else {
 					synchronized (this) {
-						//System.out.println("notifying...");
 						this.notifyAll();
 					}
 					return;

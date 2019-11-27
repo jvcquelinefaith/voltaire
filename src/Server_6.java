@@ -1,5 +1,6 @@
 
 public class Server_6 {
+	
 	public static void main(String[] args) {
 		if (args.length != 1) {
 			System.err.println("syntax : java Server_6 myPort");
@@ -12,11 +13,13 @@ public class Server_6 {
 			    if (parameters != null) {
 					String host = parameters.getRemoteHost();
 					int port = parameters.getRemotePort();
-					int id = parameters.getRemoteId();
-					FileReceiver receiver = new FileReceiver(host, port, id);
+					int remote_id = parameters.getRemoteId();
+					int local_id = (int) (Math.random() * Integer.MAX_VALUE);
+					System.out.println("about to FR with host: " + host + " port: " + port + " id: " + local_id);
+					FileReceiver receiver = new FileReceiver(host, port, local_id);
 					Layer connected = receiver.getSubLayer();
-					connected.receive(parameters.getRemoteId() + ";0;--HELLO--", "/" + host + ":"+ port );
-					QueueingDispatchLayer.register(connected, id);
+//					connected.receive(local_id + ";0;--HELLO--", "/" + host + ":"+ port );
+					QueueingDispatchLayer.register(connected, remote_id);
 					receiver.close();
 					GroundLayer.close();
 			    }
